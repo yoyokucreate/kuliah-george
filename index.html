@@ -3838,10 +3838,10 @@ q.addEventListener('input',jalan);q.addEventListener('search',jalan);chips.forEa
 const tbS=document.querySelector('.chip.semua');if(tbS)tbS.addEventListener('click',()=>{if(tbS.getAttribute('aria-pressed')==='true'){
  const ada2=aktifPeringkat;if(ada2){asal.slice().reverse().forEach(([s,p,n])=>p.insertBefore(s,n&&n.parentNode===p?n:null));wadah.replaceChildren();wadah.hidden=true;aktifPeringkat=false;}}},true);
 if(q.value.trim())jalan();})();
-/*ke-atas: muncul setelah menggulir melewati satu layar (atau >120 px bila sedang di dalam bab terbuka / hasil pencarian / Semua topik); tetap tampil sampai halaman kembali di paling atas; klik -> kembali ke atas (kotak pencarian dan chip) untuk menutup bab atau mengganti pencarian*/
+/*ke-atas: muncul setelah kotak pencarian+chip tergulir keluar layar atau melewati satu layar, mana yang lebih dulu (atau >120 px bila sedang di dalam bab terbuka / hasil pencarian / Semua topik); tetap tampil sampai halaman kembali di paling atas; klik -> kembali ke atas (kotak pencarian dan chip) untuk menutup bab atau mengganti pencarian*/
 (()=>{const b=document.createElement('button');b.id='ke-atas';b.type='button';b.setAttribute('aria-label','Kembali ke atas');b.title='Kembali ke atas';b.textContent='↑';
 document.body.appendChild(b);
-let on=false;const dalam=()=>!!document.querySelector('main details.bab[open],#hasil-cari:not([hidden]),#semua-topik:not([hidden])');const cek=()=>{const y=window.scrollY||document.documentElement.scrollTop||0;const batas=dalam()?120:innerHeight;if(!on&&y>batas)on=true;else if(on&&y<=5)on=false;b.classList.toggle('tampil',on);};document.addEventListener('toggle',()=>setTimeout(cek,350),true);
+let on=false;const dalam=()=>!!document.querySelector('main details.bab[open],#hasil-cari:not([hidden]),#semua-topik:not([hidden])');const cek=()=>{const y=window.scrollY||document.documentElement.scrollTop||0;const h=document.querySelector('header');const bawahHeader=h?h.offsetTop+h.offsetHeight:innerHeight;const batas=dalam()?120:Math.max(120,Math.min(innerHeight,bawahHeader-60));if(!on&&y>batas)on=true;else if(on&&y<=5)on=false;b.classList.toggle('tampil',on);};document.addEventListener('toggle',()=>setTimeout(cek,350),true);
 window.addEventListener('scroll',cek,{passive:true});cek();
 b.addEventListener('click',()=>{window.scrollTo({top:0,behavior:'smooth'});});})();
 /*lokal-saja*/if(location.protocol!=='file:')document.querySelectorAll('a[href]').forEach(a=>{const h=a.getAttribute('href');

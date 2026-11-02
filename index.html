@@ -3646,6 +3646,8 @@ chips.forEach(c=>c.addEventListener('click',()=>{
  if(c.dataset.cari){const on=c.getAttribute('aria-pressed')!=='true';aktif=null;
   chips.forEach(x=>x.setAttribute('aria-pressed',x===c&&on));q.value=on?c.dataset.cari:'';
   q.dispatchEvent(new Event('input'));if(on)q.scrollIntoView({block:'start'});return}
+ /*tutup-chip-ketik: pindah ke chip lain saat chip-ketik (mis. SSC) aktif -> teks pencarian chip itu dihapus, chip-ketik mati*/
+ if(chips.some(x=>x.dataset.cari&&x.getAttribute('aria-pressed')==='true')){q.value='';q.dispatchEvent(new Event('input'));}
  aktif=aktif===c.dataset.k?null:c.dataset.k;
  chips.forEach(x=>x.setAttribute('aria-pressed',x.dataset.cari?q.value.trim().toLowerCase()===x.dataset.cari.toLowerCase():x.dataset.k===aktif));saring()}));
 q.addEventListener('input',()=>chips.forEach(x=>{if(x.dataset.cari)x.setAttribute('aria-pressed',q.value.trim().toLowerCase()===x.dataset.cari.toLowerCase())}));

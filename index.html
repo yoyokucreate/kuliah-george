@@ -3806,13 +3806,19 @@ function kembali(){if(!aktifPeringkat)return;asal.slice().reverse().forEach(([s,
 function susun(){const t=q.value.trim();
  const kata=/^(?:topik\s*)?#?\d{1,3}$/i.test(t)?[]:norm(t).trim().split(' ').filter(Boolean);
  const semua=document.querySelector('.chip.semua');if(semua&&semua.getAttribute('aria-pressed')==='true')return;
- if(!kata.length){kembali();return;}
+ /*peringkat-chip: tanpa teks tetapi ada tombol kata kunci aktif -> label tombol dipakai sebagai kata pencarian.
+  Label 'A/B' = A atau B. Kelompok: judul cocok, nama bab cocok, lalu topik lain berkata kunci itu.*/
+ const chipAktif=(typeof aktif==='string'&&aktif&&!aktif.startsWith('__'))?aktif:null;
+ const alt=kata.length?[kata]:chipAktif?chipAktif.split('/').map(x=>norm(x).trim().split(' ').filter(Boolean)).filter(a=>a.length):[];
+ if(!alt.length){kembali();return;}
+ const cocok=(t)=>alt.some(a=>a.every(w=>ada(t,w)));
+ const semuaKata=[...new Set(alt.flat())];
  const tampil=tops.filter(s=>!s.hidden);
- const skor=s=>{const f=info.get(s);const kelas=kata.every(w=>ada(f.judul,w))?0:kata.every(w=>ada(f.bab+' '+f.kk,w))?1:2;
-  return [kelas,-kata.reduce((a,w)=>a+hitung(s._t||'',w),0),no(s)];};
+ const skor=s=>{const f=info.get(s);const kelas=cocok(f.judul)?0:cocok(kata.length?f.bab+' '+f.kk:f.bab)?1:2;
+  return [kelas,-semuaKata.reduce((a,w)=>a+hitung(s._t||'',w),0),no(s)];};
  const urut=tampil.map(s=>[skor(s),s]).sort((a,b)=>a[0][0]-b[0][0]||a[0][1]-b[0][1]||a[0][2]-b[0][2]);
  wadah.replaceChildren();
- const LABEL=['Judul topik cocok','Bab / kata kunci cocok','Relevan lainnya'];
+ const LABEL=kata.length?['Judul topik cocok','Bab / kata kunci cocok','Relevan lainnya']:['Judul topik cocok','Bab cocok','Topik lain dengan kata kunci ini'];
  [0,1,2].forEach(k=>{const g=urut.filter(([sk])=>sk[0]===k);if(!g.length)return;
   const h=document.createElement('p');h.className='kelompok-hasil';h.textContent=LABEL[k]+' ('+g.length+')';wadah.appendChild(h);
   g.forEach(([,s])=>wadah.appendChild(s));});

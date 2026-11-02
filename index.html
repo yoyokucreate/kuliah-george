@@ -3906,6 +3906,8 @@ function buka(a){const wadahV=a.closest('ul,ol,.p-isi,.pintasan,.topik')||docume
 function tutup(){layar.querySelectorAll('video').forEach(v=>{try{v.pause();}catch(_){}});layar.replaceChildren();P.hidden=true;
  document.body.classList.remove('pemutar-buka');if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
 P.querySelector('.tutup').onclick=tutup;
+/*buka di tab baru -> pemutar di katalog dihentikan dan ditutup, agar video yang sama tidak berjalan dua kali*/
+tab.addEventListener('click',()=>setTimeout(tutup,0));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!P.hidden&&!document.fullscreenElement)tutup();});
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a.p-video');if(!a||e.metaKey||e.ctrlKey)return;
  e.preventDefault();e.stopImmediatePropagation();buka(a);},true);})();

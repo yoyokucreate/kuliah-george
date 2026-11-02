@@ -3824,7 +3824,9 @@ function susun(){const t=q.value.trim();
  [0,1,2].forEach(k=>{const g=urut.filter(([sk])=>sk[0]===k);if(!g.length)return;
   const h=document.createElement('p');h.className='kelompok-hasil';h.textContent=LABEL[k]+' ('+g.length+')';wadah.appendChild(h);
   g.forEach(([,s])=>wadah.appendChild(s));});
- wadah.hidden=urut.length===0;babs.forEach(b=>b.hidden=true);aktifPeringkat=true;}
+ wadah.hidden=urut.length===0;babs.forEach(b=>b.hidden=true);aktifPeringkat=true;
+ /*ssc-tertutup: bila kartu pintasan (mis. SSC) tampil, hanya kartu itu yang terbuka; bagian di dalam topik (catatan, kepustakaan, dst.) tetap tertutup*/
+ if([...document.querySelectorAll('.pintasan')].some(x=>!x.hidden))wadah.querySelectorAll('details[open]').forEach(d=>d.open=false);}
 const jalan=()=>setTimeout(susun,0);
 q.addEventListener('input',jalan);q.addEventListener('search',jalan);chips.forEach(c=>c.addEventListener('click',jalan));
 const tbS=document.querySelector('.chip.semua');if(tbS)tbS.addEventListener('click',()=>{if(tbS.getAttribute('aria-pressed')==='true'){

@@ -80,6 +80,11 @@ details.catatan{border-left:3px solid var(--amber);padding-left:.8rem;margin:.6r
 #semua-topik .topik{border-top:1px solid var(--rule)}
 /*peringkat-cari*/
 #hasil-cari .topik{border-top:1px solid var(--rule)}
+/*ke-atas: tombol panah melayang kembali ke kotak pencarian*/
+#ke-atas{position:fixed;right:max(1rem,env(safe-area-inset-right));bottom:max(1rem,env(safe-area-inset-bottom));z-index:40;width:3rem;height:3rem;border-radius:50%;border:0;background:var(--teal,#1f6f78);color:#fff;font-size:1.5rem;line-height:1;box-shadow:0 3px 12px rgba(0,0,0,.25);cursor:pointer;opacity:0;pointer-events:none;transform:translateY(.5rem);transition:opacity .2s,transform .2s}
+#ke-atas.tampil{opacity:.92;pointer-events:auto;transform:none}
+#ke-atas:hover{opacity:1}
+body.panel-buka #ke-atas{display:none}
 #hasil-cari .kelompok-hasil{font-size:.82rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--teal);margin:1.1rem 0 .2rem;padding-top:.6rem;border-top:3px solid var(--ink)}
 #hasil-cari .kelompok-hasil:first-child{margin-top:.3rem}
 .chip.semua{font-weight:700}
@@ -3832,6 +3837,12 @@ q.addEventListener('input',jalan);q.addEventListener('search',jalan);chips.forEa
 const tbS=document.querySelector('.chip.semua');if(tbS)tbS.addEventListener('click',()=>{if(tbS.getAttribute('aria-pressed')==='true'){
  const ada2=aktifPeringkat;if(ada2){asal.slice().reverse().forEach(([s,p,n])=>p.insertBefore(s,n&&n.parentNode===p?n:null));wadah.replaceChildren();wadah.hidden=true;aktifPeringkat=false;}}},true);
 if(q.value.trim())jalan();})();
+/*ke-atas: muncul setelah menggulir sekitar satu layar; klik -> kembali ke atas (kotak pencarian dan chip) untuk menutup bab atau mengganti pencarian*/
+(()=>{const b=document.createElement('button');b.id='ke-atas';b.type='button';b.setAttribute('aria-label','Kembali ke atas');b.title='Kembali ke atas';b.textContent='↑';
+document.body.appendChild(b);
+const cek=()=>b.classList.toggle('tampil',window.scrollY>Math.max(500,innerHeight*0.8));
+window.addEventListener('scroll',cek,{passive:true});cek();
+b.addEventListener('click',()=>{window.scrollTo({top:0,behavior:'smooth'});});})();
 /*lokal-saja*/if(location.protocol!=='file:')document.querySelectorAll('a[href]').forEach(a=>{const h=a.getAttribute('href');
 if(!h||/^(https?:|#|mailto:|javascript:|data:|kuliah-george:|file:)/i.test(h))return;const s=document.createElement('span');
 s.className=a.className;s.style.cssText='opacity:.6;cursor:help';s.textContent=a.textContent+' (belum ada di Drive)';

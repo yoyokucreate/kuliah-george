@@ -119,6 +119,8 @@ body.pemutar-buka #ke-atas{display:none}
 .ctl:hover{background:#0e6b6b}
 .ctl.lpx{right:22px;bottom:18px}.ctl.pop{right:14px;top:10px;font-size:1.15rem}
 #pemutar .layar:fullscreen,#galeri .layar:fullscreen{background:#000}
+#pemutar.maks .bar,#pemutar.maks .daftar,#galeri.maks .bar,#galeri.maks .daftar{display:none!important}
+#pemutar.maks .isi,#galeri.maks .isi{flex:1}
 #pemutar .jeda{text-align:center;color:#ddd;font:1rem system-ui,sans-serif}#pemutar .jeda button{margin-top:.6rem;font:600 1rem system-ui,sans-serif;color:#fff;background:#a5281b;border:0;border-radius:8px;padding:.55rem 1rem;cursor:pointer}
 /*galeri-seri: penampil infografis berseri (selalu mulai dari bagian 1)*/
 #galeri{position:fixed;inset:0;z-index:2147483200;background:#0b0f10;color:#eee;display:flex;flex-direction:column}
@@ -3944,8 +3946,7 @@ function buka(a){const wadahV=a.closest('ul,ol,.p-isi,.pintasan,.topik')||docume
   b.textContent='▶ '+it.judul;b.onclick=()=>putar(k);li.appendChild(b);daftar.appendChild(li);});
  daftar.hidden=isi.length<2;
  P.hidden=false;document.body.classList.add('pemutar-buka');
- putar(Math.max(0,isi.findIndex(it=>it.href===a.href)));
- if(P.requestFullscreen&&!document.fullscreenElement)P.requestFullscreen().catch(()=>{});}
+ putar(Math.max(0,isi.findIndex(it=>it.href===a.href)));}
 function tutup(){layar.querySelectorAll('video').forEach(v=>{try{v.pause();}catch(_){}});layar.replaceChildren();P.hidden=true;
  document.body.classList.remove('pemutar-buka');if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
 P.querySelector('.tutup').onclick=tutup;
@@ -3996,8 +3997,7 @@ function buka(a){isi=kumpul();let k=isi.findIndex(x=>x.href===a.href);if(k<0)ret
  daf.replaceChildren();let tp='';
  isi.forEach((it,n)=>{if(it.topik!==tp){tp=it.topik;const h=document.createElement('li');h.className='kel';h.textContent=tp;daf.appendChild(h);}
   const li=document.createElement('li');const b=document.createElement('button');b.type='button';b.textContent=(it.seri?'▤ ':'')+it.judul;b.onclick=()=>ke(n);li.appendChild(b);daf.appendChild(li);});
- G.hidden=false;document.body.classList.add('galeri-buka');ke(k);
- if(G.requestFullscreen&&!document.fullscreenElement)G.requestFullscreen().catch(()=>{});return true;}
+ G.hidden=false;document.body.classList.add('galeri-buka');ke(k);return true;}
 function tutup(){lay.querySelectorAll('img,iframe').forEach(x=>x.remove());G.hidden=true;document.body.classList.remove('galeri-buka');
  if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
 G.querySelector('.tutup').onclick=tutup;ki.onclick=()=>ke(i-1);ka.onclick=()=>ke(i+1);/*Buka file: penampil dan daftar tetap terbuka, agar setelah tab baru ditutup langsung kembali ke sini*/
@@ -4015,22 +4015,24 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
 (()=>{const pasang=ov=>{if(!ov)return;const lay=ov.querySelector('.layar');if(!lay||lay.querySelector('.ctl'))return;
  const lp=document.createElement('button');lp.type='button';lp.className='ctl lpx';lp.title='Perbesar / kecilkan';lp.setAttribute('aria-label','Perbesar atau kecilkan');lp.textContent='⛶';
  const po=document.createElement('button');po.type='button';po.className='ctl pop';po.title='Buka di tab baru';po.setAttribute('aria-label','Buka di tab baru');po.textContent='↗';
- lp.onclick=e=>{e.stopPropagation();if(document.fullscreenElement===lay){document.exitFullscreen().catch(()=>{});}
-  else if(lay.requestFullscreen){lay.requestFullscreen().catch(()=>{});}else if(lay.webkitRequestFullscreen){lay.webkitRequestFullscreen();}};
+
  po.onclick=e=>{e.stopPropagation();const t=ov.querySelector('.bar a.tab');if(t)t.click();};
  lay.appendChild(lp);lay.appendChild(po);};
  const cek=()=>{pasang(document.getElementById('pemutar'));pasang(document.getElementById('galeri'));};
  setTimeout(()=>{cek();document.querySelectorAll('#pemutar .layar,#galeri .layar').forEach(l=>new MutationObserver(()=>{if(!l.querySelector('.ctl'))pasang(l.closest('#pemutar,#galeri'));}).observe(l,{childList:true}));},0);
- document.addEventListener('fullscreenchange',()=>{document.querySelectorAll('.ctl.lpx').forEach(b=>{const on=document.fullscreenElement===b.parentElement;b.textContent=on?'✕':'⛶';b.title=on?'Kecilkan (kembali ke daftar)':'Perbesar';});});})();
-/*layar-penuh: tombol Kecilkan/Perbesar di penampil video dan infografis. Kecilkan = keluar layar penuh, penampil + daftar tetap terbuka*/
-(()=>{const atur=()=>{document.querySelectorAll('#pemutar .lp,#galeri .lp').forEach(b=>{const ov=b.closest('#pemutar,#galeri');
-  const pen=!!document.fullscreenElement&&ov&&ov.contains(document.fullscreenElement);b.textContent=pen?'⤡ Kecilkan':'⤢ Perbesar';
-  b.hidden=!document.fullscreenEnabled;});};
-document.addEventListener('fullscreenchange',atur);
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#pemutar .lp,#galeri .lp');if(!b)return;e.preventDefault();
- const ov=b.closest('#pemutar,#galeri');if(document.fullscreenElement){document.exitFullscreen().catch(()=>{});}
- else if(ov&&ov.requestFullscreen){ov.requestFullscreen().catch(()=>{});}setTimeout(atur,200);},true);
-setTimeout(atur,0);})();
+})();
+/*maks: perbesar = sembunyikan bar atas dan daftar sehingga gambar/video memenuhi layar (tanpa API layar penuh browser, yang ditolak Chrome
+ dan tidak ada di Safari iPhone). Tombol kanan bawah atau 'Perbesar/Kecilkan' di bar = alih; Esc saat diperbesar = kecilkan; Tutup = keluar.*/
+(()=>{const ovs=()=>[document.getElementById('pemutar'),document.getElementById('galeri')].filter(Boolean);
+const label=ov=>{const on=ov.classList.contains('maks');ov.querySelectorAll('.bar .lp').forEach(b=>{b.textContent=on?'⤡ Kecilkan':'⤢ Perbesar';b.hidden=false;});
+ ov.querySelectorAll('.ctl.lpx').forEach(b=>{b.textContent=on?'⤡':'⛶';b.title=on?'Kecilkan (kembali ke daftar)':'Perbesar';});};
+window.__altMaks=ov=>{ov.classList.toggle('maks');label(ov);};
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#pemutar .bar .lp,#galeri .bar .lp,#pemutar .ctl.lpx,#galeri .ctl.lpx');
+ if(b){e.preventDefault();e.stopPropagation();window.__altMaks(b.closest('#pemutar,#galeri'));return;}
+ const t=e.target.closest&&e.target.closest('#pemutar .tutup,#galeri .tutup');if(t){const ov=t.closest('#pemutar,#galeri');ov.classList.remove('maks');label(ov);}},true);
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const ov=ovs().find(o=>!o.hidden&&o.classList.contains('maks'));
+ if(ov){ov.classList.remove('maks');label(ov);e.preventDefault();e.stopImmediatePropagation();}},true);
+setTimeout(()=>ovs().forEach(label),0);})();
 /*ke-atas: muncul begitu kotak pencarian tergulir keluar layar (sama di Mac, iPad, HP); hilang di paling atas; cek cadangan tiap 600 ms untuk Safari iOS; tetap tampil sampai halaman kembali di paling atas; klik -> kembali ke atas (kotak pencarian dan chip) untuk menutup bab atau mengganti pencarian*/
 (()=>{const b=document.createElement('button');b.id='ke-atas';b.type='button';b.setAttribute('aria-label','Kembali ke atas');b.title='Kembali ke atas';b.textContent='↑';
 document.body.appendChild(b);

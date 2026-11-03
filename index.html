@@ -4003,7 +4003,8 @@ document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest
 document.body.appendChild(b);
 let on=false;const dalam=()=>!!document.querySelector('main details.bab[open],#hasil-cari:not([hidden]),#semua-topik:not([hidden])');const cek=()=>{const y=window.scrollY||document.documentElement.scrollTop||0;const k=document.getElementById('cari');const bawahCari=k?k.getBoundingClientRect().bottom+y:200;const batas=Math.max(100,bawahCari);if(!on&&y>batas)on=true;else if(on&&y<=5)on=false;b.classList.toggle('tampil',on);};document.addEventListener('toggle',()=>setTimeout(cek,350),true);setInterval(cek,600);
 window.addEventListener('scroll',cek,{passive:true});cek();
-b.addEventListener('click',()=>{window.scrollTo({top:0,behavior:'smooth'});});})();
+/*ke-atas-tutup: tutup semua bab/topik/bagian yang terbuka, lalu kembali ke paling atas*/
+b.addEventListener('click',()=>{document.querySelectorAll('main details[open]').forEach(d=>{d.open=false;});requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}));});})();
 /*lokal-saja*/if(location.protocol!=='file:')document.querySelectorAll('a[href]').forEach(a=>{const h=a.getAttribute('href');
 if(!h||/^(https?:|#|mailto:|javascript:|data:|kuliah-george:|file:)/i.test(h))return;const s=document.createElement('span');
 s.className=a.className;s.style.cssText='opacity:.6;cursor:help';s.textContent=a.textContent+' (belum ada di Drive)';

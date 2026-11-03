@@ -112,6 +112,22 @@ body.panel-buka #ke-atas{display:none}
 #pemutar .daftar button:hover{border-color:#c0392b}
 @media (max-width:52rem){#pemutar .isi{flex-direction:column}#pemutar .daftar{width:auto;max-height:34vh}}
 body.pemutar-buka #ke-atas{display:none}
+/*galeri-seri: penampil infografis berseri (selalu mulai dari bagian 1)*/
+#galeri{position:fixed;inset:0;z-index:2147483200;background:#0b0f10;color:#eee;display:flex;flex-direction:column}
+#galeri[hidden]{display:none}
+#galeri .bar{display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;background:#141a1c;font:600 .95rem system-ui,sans-serif;flex-wrap:wrap}
+#galeri .bar .jdl{flex:1;min-width:10rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#galeri .bar button,#galeri .bar a{font:inherit;color:#fff;background:#2a3437;border:0;border-radius:6px;padding:.3rem .7rem;cursor:pointer;text-decoration:none}
+#galeri .bar .no{min-width:2.1rem}#galeri .bar .no.aktif{background:#0e6b6b}
+#galeri .bar .hit{color:#9fd;min-width:3.5rem;text-align:center}
+#galeri .layar{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;background:#000;position:relative}
+#galeri .layar img{max-width:100%;max-height:100%;object-fit:contain}
+#galeri .layar iframe{width:100%;height:100%;border:0;background:#000}
+#galeri .panah{position:absolute;top:50%;transform:translateY(-50%);width:3rem;height:4.5rem;border:0;border-radius:8px;background:rgba(20,26,28,.75);color:#fff;font-size:2rem;cursor:pointer;z-index:2}
+#galeri .panah:disabled{opacity:.25;cursor:default}
+#galeri .panah.kiri{left:.6rem}#galeri .panah.kanan{right:.6rem}
+body.galeri-buka #ke-atas{display:none}
+a.seri-info::after{content:" ▤ seri";font-size:.72rem;color:var(--teal,#0e6b6b);font-weight:700;white-space:nowrap}
 @media (min-width:52rem){#ke-atas{right:4.5rem}}
 #hasil-cari .kelompok-hasil{font-size:.82rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--teal);margin:1.1rem 0 .2rem;padding-top:.6rem;border-top:3px solid var(--ink)}
 #hasil-cari .kelompok-hasil:first-child{margin-top:.3rem}
@@ -3914,6 +3930,40 @@ tab.addEventListener('click',()=>setTimeout(tutup,0));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!P.hidden&&!document.fullscreenElement)tutup();});
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a.p-video');if(!a||e.metaKey||e.ctrlKey)return;
  e.preventDefault();e.stopImmediatePropagation();buka(a);},true);})();
+/*galeri-seri: infografis berseri ('Infografis - <seri> N dari M, ...') dalam satu topik dibuka berurutan di penampil layar penuh.
+ Bagian mana pun yang diklik, penampil selalu mulai dari bagian pertama. Pindah: tombol, panah keyboard, geser (HP). Tutup: x / Esc.*/
+(()=>{const RE=/^\s*Infografis\s*-\s*(.+?)\s+(\d+)\s+dari\s+(\d+)\b\s*,?\s*(.*?)(?:\.(?:jpe?g|png|webp|pdf))?\s*$/i;
+const seri=new Map();
+document.querySelectorAll('.topik a').forEach(a=>{const m=(a.textContent||'').match(RE);if(!m)return;
+ const sec=a.closest('.topik');const k=(sec?sec.id:'')+'|'+m[1].toLowerCase();
+ if(!seri.has(k))seri.set(k,{nama:m[1],total:+m[3],bag:new Map()});const S=seri.get(k);
+ if(!S.bag.has(+m[2]))S.bag.set(+m[2],{href:a.href,ket:m[4]});a.dataset.seri=k;});
+seri.forEach((S,k)=>{if(S.bag.size<2)document.querySelectorAll('a[data-seri]').forEach(a=>{if(a.dataset.seri===k)delete a.dataset.seri;});});
+document.querySelectorAll('a[data-seri]').forEach(a=>a.classList.add('seri-info'));
+if(!document.querySelector('a[data-seri]'))return;
+const G=document.createElement('div');G.id='galeri';G.hidden=true;
+G.innerHTML='<div class="bar"><span class="jdl"></span><span class="hit"></span><span class="nos"></span><a class="tab" target="_blank" rel="noopener">Buka file</a><button type="button" class="tutup">✕ Tutup</button></div><div class="layar"><button type="button" class="panah kiri" aria-label="Sebelumnya">‹</button><button type="button" class="panah kanan" aria-label="Berikutnya">›</button></div>';
+document.body.appendChild(G);const lay=G.querySelector('.layar'),jdl=G.querySelector('.jdl'),hit=G.querySelector('.hit'),nos=G.querySelector('.nos'),tab=G.querySelector('a.tab'),ki=G.querySelector('.kiri'),ka=G.querySelector('.kanan');
+let urut=[],i=0,nm='';
+const tampil=h=>{const m=h.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);let el;
+ if(m){el=document.createElement('iframe');el.src='https://drive.google.com/file/d/'+m[1]+'/preview';el.allow='fullscreen';}
+ else{el=document.createElement('img');el.src=h;el.alt='';}return el;};
+function ke(n){if(!urut.length)return;i=Math.max(0,Math.min(urut.length-1,n));const [no,b]=urut[i];
+ lay.querySelectorAll('img,iframe').forEach(x=>x.remove());lay.insertBefore(tampil(b.href),ki);
+ jdl.textContent=nm+' — bagian '+no+(b.ket?': '+b.ket:'');hit.textContent=(i+1)+' / '+urut.length;tab.href=b.href;
+ ki.disabled=i===0;ka.disabled=i===urut.length-1;nos.querySelectorAll('button').forEach((x,k)=>x.classList.toggle('aktif',k===i));}
+function buka(k){const S=seri.get(k);if(!S)return;nm=S.nama;urut=[...S.bag.entries()].sort((x,y)=>x[0]-y[0]);
+ nos.replaceChildren();urut.forEach(([no],k2)=>{const b=document.createElement('button');b.type='button';b.className='no';b.textContent=no;b.title='Bagian '+no+' dari '+S.total;b.onclick=()=>ke(k2);nos.appendChild(b);});
+ G.hidden=false;document.body.classList.add('galeri-buka');ke(0);
+ if(G.requestFullscreen&&!document.fullscreenElement)G.requestFullscreen().catch(()=>{});}
+function tutup(){lay.querySelectorAll('img,iframe').forEach(x=>x.remove());G.hidden=true;document.body.classList.remove('galeri-buka');
+ if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
+G.querySelector('.tutup').onclick=tutup;ki.onclick=()=>ke(i-1);ka.onclick=()=>ke(i+1);tab.addEventListener('click',()=>setTimeout(tutup,0));
+document.addEventListener('keydown',e=>{if(G.hidden)return;if(e.key==='ArrowRight'){ke(i+1);e.preventDefault();}else if(e.key==='ArrowLeft'){ke(i-1);e.preventDefault();}else if(e.key==='Escape'&&!document.fullscreenElement)tutup();});
+let x0=null;lay.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
+lay.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)ke(i+(dx<0?1:-1));},{passive:true});
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-seri]');if(!a||e.metaKey||e.ctrlKey)return;
+ e.preventDefault();e.stopImmediatePropagation();buka(a.dataset.seri);},true);})();
 /*ke-atas: muncul begitu kotak pencarian tergulir keluar layar (sama di Mac, iPad, HP); hilang di paling atas; cek cadangan tiap 600 ms untuk Safari iOS; tetap tampil sampai halaman kembali di paling atas; klik -> kembali ke atas (kotak pencarian dan chip) untuk menutup bab atau mengganti pencarian*/
 (()=>{const b=document.createElement('button');b.id='ke-atas';b.type='button';b.setAttribute('aria-label','Kembali ke atas');b.title='Kembali ke atas';b.textContent='↑';
 document.body.appendChild(b);

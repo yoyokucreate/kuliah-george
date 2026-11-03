@@ -56,6 +56,9 @@ details.catatan{border-left:3px solid var(--amber);padding-left:.8rem;margin:.6r
 .sorotan p{margin:.3rem 0}
 /*video-pendek: per topik (video.json) dan kumpulan per bab*/
 .video-daftar{list-style:none;padding-left:.2rem;margin:.3rem 0}.video-daftar li{margin:.35rem 0}
+/*nomor-video: daftar video di topik 59 diberi nomor urut agar mudah diikuti*/
+#topik-59 .video-daftar{list-style:none;counter-reset:nv;padding-left:0}#topik-59 .video-daftar li{counter-increment:nv;position:relative;padding-left:2.1rem}
+#topik-59 .video-daftar li::before{content:counter(nv);position:absolute;left:0;top:.05rem;min-width:1.55rem;height:1.55rem;line-height:1.55rem;text-align:center;border-radius:50%;background:var(--teal,#0e6b6b);color:#fff;font-size:.8rem;font-weight:700}
 a.video{font-weight:600;color:var(--teal);text-decoration:none}a.video:hover{text-decoration:underline}
 /*pintasan: kartu di atas hasil pencarian (pintasan.json), mis. SSC terbaru + infografis*/
 .pintasan{border:2px solid var(--teal);border-radius:8px;background:var(--paper,#fff);padding:.7rem 1rem;margin:.8rem 0 .2rem;max-width:80ch}

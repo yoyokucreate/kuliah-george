@@ -114,8 +114,11 @@ body.panel-buka #ke-atas{display:none}
 body.pemutar-buka #ke-atas{display:none}
 /*perisai-drive: menutup ikon 'buka di jendela baru' milik pemutar Google Drive (pojok kanan atas), supaya file dibuka lewat tombol katalog*/
 #pemutar .layar,#galeri .layar{position:relative}
-#pemutar .layar::after,#galeri .layar::after{content:"";position:absolute;top:0;right:0;width:68px;height:62px;z-index:3;background:transparent}
-#galeri .layar::after{right:0}
+/*kontrol-pengganti: tombol layar penuh (kanan bawah) dan pop-out (kanan atas) milik katalog, menggantikan ikon Drive yang tidak berfungsi saat disematkan*/
+.ctl{position:absolute;z-index:4;width:46px;height:46px;border:0;border-radius:8px;background:rgba(20,26,28,.82);color:#fff;font:700 1.35rem/46px system-ui,sans-serif;text-align:center;cursor:pointer;padding:0}
+.ctl:hover{background:#0e6b6b}
+.ctl.lpx{right:22px;bottom:18px}.ctl.pop{right:14px;top:10px;font-size:1.15rem}
+#pemutar .layar:fullscreen,#galeri .layar:fullscreen{background:#000}
 #pemutar .jeda{text-align:center;color:#ddd;font:1rem system-ui,sans-serif}#pemutar .jeda button{margin-top:.6rem;font:600 1rem system-ui,sans-serif;color:#fff;background:#a5281b;border:0;border-radius:8px;padding:.55rem 1rem;cursor:pointer}
 /*galeri-seri: penampil infografis berseri (selalu mulai dari bagian 1)*/
 #galeri{position:fixed;inset:0;z-index:2147483200;background:#0b0f10;color:#eee;display:flex;flex-direction:column}
@@ -4006,6 +4009,19 @@ kumpul().forEach(it=>{if(it.seri)it.a.classList.add('seri-info');});
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('.topik a');if(!a||e.metaKey||e.ctrlKey||!isFile(a))return;
  const li=a.closest('li');if(!li||li.closest('.video-pendek,.video-daftar')||!/infografis/i.test(li.textContent||''))return;
  if(buka(a)){e.preventDefault();e.stopImmediatePropagation();}},true);})();
+/*kontrol-pengganti: pasang tombol di setiap penampil (video dan infografis). Kanan bawah = perbesar/kecilkan area gambar/video
+ (fullscreen elemen .layar; ditekan lagi atau Esc -> kembali ke penampil + daftar). Kanan atas = buka di tab baru lewat tombol bar
+ (penampil tetap terbuka; video di katalog dijeda).*/
+(()=>{const pasang=ov=>{if(!ov)return;const lay=ov.querySelector('.layar');if(!lay||lay.querySelector('.ctl'))return;
+ const lp=document.createElement('button');lp.type='button';lp.className='ctl lpx';lp.title='Perbesar / kecilkan';lp.setAttribute('aria-label','Perbesar atau kecilkan');lp.textContent='⛶';
+ const po=document.createElement('button');po.type='button';po.className='ctl pop';po.title='Buka di tab baru';po.setAttribute('aria-label','Buka di tab baru');po.textContent='↗';
+ lp.onclick=e=>{e.stopPropagation();if(document.fullscreenElement===lay){document.exitFullscreen().catch(()=>{});}
+  else if(lay.requestFullscreen){lay.requestFullscreen().catch(()=>{});}else if(lay.webkitRequestFullscreen){lay.webkitRequestFullscreen();}};
+ po.onclick=e=>{e.stopPropagation();const t=ov.querySelector('.bar a.tab');if(t)t.click();};
+ lay.appendChild(lp);lay.appendChild(po);};
+ const cek=()=>{pasang(document.getElementById('pemutar'));pasang(document.getElementById('galeri'));};
+ setTimeout(()=>{cek();document.querySelectorAll('#pemutar .layar,#galeri .layar').forEach(l=>new MutationObserver(()=>{if(!l.querySelector('.ctl'))pasang(l.closest('#pemutar,#galeri'));}).observe(l,{childList:true}));},0);
+ document.addEventListener('fullscreenchange',()=>{document.querySelectorAll('.ctl.lpx').forEach(b=>{const on=document.fullscreenElement===b.parentElement;b.textContent=on?'✕':'⛶';b.title=on?'Kecilkan (kembali ke daftar)':'Perbesar';});});})();
 /*layar-penuh: tombol Kecilkan/Perbesar di penampil video dan infografis. Kecilkan = keluar layar penuh, penampil + daftar tetap terbuka*/
 (()=>{const atur=()=>{document.querySelectorAll('#pemutar .lp,#galeri .lp').forEach(b=>{const ov=b.closest('#pemutar,#galeri');
   const pen=!!document.fullscreenElement&&ov&&ov.contains(document.fullscreenElement);b.textContent=pen?'⤡ Kecilkan':'⤢ Perbesar';

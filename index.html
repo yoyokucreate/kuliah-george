@@ -127,6 +127,12 @@ body.pemutar-buka #ke-atas{display:none}
 #galeri .panah:disabled{opacity:.25;cursor:default}
 #galeri .panah.kiri{left:.6rem}#galeri .panah.kanan{right:.6rem}
 body.galeri-buka #ke-atas{display:none}
+#galeri .isi{flex:1;display:flex;min-height:0}
+#galeri .daftar{width:min(30vw,360px);overflow-y:auto;background:#141a1c;padding:.4rem;margin:0;list-style:none}
+#galeri .daftar li{margin:.2rem 0}#galeri .daftar li.kel{margin:.7rem .2rem .25rem;font:700 .74rem system-ui,sans-serif;color:#9fd;text-transform:uppercase;letter-spacing:.03em}
+#galeri .daftar button{width:100%;text-align:left;background:#1d2629;color:#ddd;border:1px solid #2c383b;border-radius:6px;padding:.4rem .55rem;font:.84rem/1.3 system-ui,sans-serif;cursor:pointer}
+#galeri .daftar button.aktif{background:#0e6b6b;border-color:#14a0a0;color:#fff}#galeri .daftar button:hover{border-color:#14a0a0}
+@media (max-width:52rem){#galeri .isi{flex-direction:column}#galeri .daftar{width:auto;max-height:30vh}}
 a.seri-info::after{content:" ▤ seri";font-size:.72rem;color:var(--teal,#0e6b6b);font-weight:700;white-space:nowrap}
 @media (min-width:52rem){#ke-atas{right:4.5rem}}
 #hasil-cari .kelompok-hasil{font-size:.82rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--teal);margin:1.1rem 0 .2rem;padding-top:.6rem;border-top:3px solid var(--ink)}
@@ -3940,40 +3946,58 @@ tab.addEventListener('click',()=>setTimeout(tutup,0));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!P.hidden&&!document.fullscreenElement)tutup();});
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a.p-video');if(!a||e.metaKey||e.ctrlKey)return;
  e.preventDefault();e.stopImmediatePropagation();buka(a);},true);})();
-/*galeri-seri: infografis berseri ('Infografis - <seri> N dari M, ...') dalam satu topik dibuka berurutan di penampil layar penuh.
- Bagian mana pun yang diklik, penampil selalu mulai dari bagian pertama. Pindah: tombol, panah keyboard, geser (HP). Tutup: x / Esc.*/
+/*galeri-infografis: SEMUA infografis (file/tautan yang namanya memuat 'infografis', di luar bagian video) dibuka di penampil layar penuh
+ dengan daftar infografis lain di samping, dikelompokkan per topik. Seri ('Infografis - <seri> N dari M') selalu dibuka dari bagian 1 dan
+ berurutan; infografis tunggal dibuka langsung. Pindah: daftar, tombol, panah keyboard, geser (HP). Tutup: x / Esc -> kembali ke katalog.*/
 (()=>{const RE=/^\s*Infografis\s*-\s*(.+?)\s+(\d+)\s+dari\s+(\d+)\b\s*,?\s*(.*?)(?:\.(?:jpe?g|png|webp|pdf))?\s*$/i;
-const seri=new Map();
-document.querySelectorAll('.topik a').forEach(a=>{const m=(a.textContent||'').match(RE);if(!m)return;
- const sec=a.closest('.topik');const k=(sec?sec.id:'')+'|'+m[1].toLowerCase();
- if(!seri.has(k))seri.set(k,{nama:m[1],total:+m[3],bag:new Map()});const S=seri.get(k);
- if(!S.bag.has(+m[2]))S.bag.set(+m[2],{href:a.href,ket:m[4]});a.dataset.seri=k;});
-seri.forEach((S,k)=>{if(S.bag.size<2)document.querySelectorAll('a[data-seri]').forEach(a=>{if(a.dataset.seri===k)delete a.dataset.seri;});});
-document.querySelectorAll('a[data-seri]').forEach(a=>a.classList.add('seri-info'));
-if(!document.querySelector('a[data-seri]'))return;
+const isFile=a=>{const h=a.getAttribute('href')||'';return /drive\.google\.com\/file\/d\//.test(a.href)||/\.(jpe?g|png|webp|pdf)(#|$)/i.test(h);};
+const bersih=t=>t.replace(/\s+/g,' ').replace(/BARU/g,'').replace(/▤ seri/g,'').replace(/\.(jpe?g|png|webp|pdf)\b/gi,'').replace(/^Society of Critical Care Medicine\.\s*Surviving Sepsis Campaign (\d{4})\.\s*/i,'SSC $1: ').replace(/\s*\[infografis resmi\]\.?.*$/i,' (infografis resmi)').trim();
+function kumpul(){const out=[];
+ document.querySelectorAll('.topik:not([hidden])').forEach(sec=>{const jt=(sec.querySelector('h3,h2')||{textContent:''}).textContent.replace(/BARU.*$/,'').trim();
+  const lihat=new Set();
+  sec.querySelectorAll('li').forEach(li=>{if(li.closest('.video-pendek,.video-daftar'))return;
+   const as=[...li.querySelectorAll(':scope > a, :scope a')].filter(isFile);if(!as.length)return;
+   const teks=li.textContent||'';if(!/infografis/i.test(teks))return;
+   const a=as.find(x=>/infografis/i.test(x.textContent))||as.find(x=>x.classList.contains('pdf'))||as[0];
+   if(lihat.has(a.href))return;lihat.add(a.href);
+   const m=(a.textContent||'').match(RE);
+   out.push({a,href:a.href,topik:jt,sec,seri:m?m[1]:null,no:m?+m[2]:0,total:m?+m[3]:0,
+    judul:m?(m[1]+' — bagian '+m[2]+(m[4]?': '+m[4]:'')):bersih(/infografis/i.test(a.textContent)?a.textContent.replace(/^\s*Infografis\s*-\s*/i,''):teks).slice(0,120)});});});
+ /*urutkan seri di dalam topik: bagian 1..M berurutan di tempat bagian pertama muncul*/
+ const hasil=[];const sudah=new Set();
+ out.forEach(it=>{if(sudah.has(it))return;
+  if(it.seri){const g=out.filter(x=>x.sec===it.sec&&x.seri===it.seri).sort((x,y)=>x.no-y.no);g.forEach(x=>{sudah.add(x);hasil.push(x);});}
+  else{sudah.add(it);hasil.push(it);}});
+ return hasil;}
 const G=document.createElement('div');G.id='galeri';G.hidden=true;
-G.innerHTML='<div class="bar"><span class="jdl"></span><span class="hit"></span><span class="nos"></span><a class="tab" target="_blank" rel="noopener">Buka file</a><button type="button" class="tutup">✕ Tutup</button></div><div class="layar"><button type="button" class="panah kiri" aria-label="Sebelumnya">‹</button><button type="button" class="panah kanan" aria-label="Berikutnya">›</button></div>';
-document.body.appendChild(G);const lay=G.querySelector('.layar'),jdl=G.querySelector('.jdl'),hit=G.querySelector('.hit'),nos=G.querySelector('.nos'),tab=G.querySelector('a.tab'),ki=G.querySelector('.kiri'),ka=G.querySelector('.kanan');
-let urut=[],i=0,nm='';
+G.innerHTML='<div class="bar"><span class="jdl"></span><span class="hit"></span><a class="tab" target="_blank" rel="noopener">Buka file</a><button type="button" class="tutup">✕ Tutup</button></div><div class="isi"><div class="layar"><button type="button" class="panah kiri" aria-label="Sebelumnya">‹</button><button type="button" class="panah kanan" aria-label="Berikutnya">›</button></div><ul class="daftar"></ul></div>';
+document.body.appendChild(G);const lay=G.querySelector('.layar'),jdl=G.querySelector('.jdl'),hit=G.querySelector('.hit'),tab=G.querySelector('a.tab'),ki=G.querySelector('.kiri'),ka=G.querySelector('.kanan'),daf=G.querySelector('.daftar');
+let isi=[],i=0;
 const tampil=h=>{const m=h.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);let el;
- if(m){el=document.createElement('iframe');el.src='https://drive.google.com/file/d/'+m[1]+'/preview';el.allow='fullscreen';}
+ if(m||/\.pdf(#|$)/i.test(h)){el=document.createElement('iframe');el.src=m?'https://drive.google.com/file/d/'+m[1]+'/preview':h;el.allow='fullscreen';}
  else{el=document.createElement('img');el.src=h;el.alt='';}return el;};
-function ke(n){if(!urut.length)return;i=Math.max(0,Math.min(urut.length-1,n));const [no,b]=urut[i];
- lay.querySelectorAll('img,iframe').forEach(x=>x.remove());lay.insertBefore(tampil(b.href),ki);
- jdl.textContent=nm+' — bagian '+no+(b.ket?': '+b.ket:'');hit.textContent=(i+1)+' / '+urut.length;tab.href=b.href;
- ki.disabled=i===0;ka.disabled=i===urut.length-1;nos.querySelectorAll('button').forEach((x,k)=>x.classList.toggle('aktif',k===i));}
-function buka(k){const S=seri.get(k);if(!S)return;nm=S.nama;urut=[...S.bag.entries()].sort((x,y)=>x[0]-y[0]);
- nos.replaceChildren();urut.forEach(([no],k2)=>{const b=document.createElement('button');b.type='button';b.className='no';b.textContent=no;b.title='Bagian '+no+' dari '+S.total;b.onclick=()=>ke(k2);nos.appendChild(b);});
- G.hidden=false;document.body.classList.add('galeri-buka');ke(0);
- if(G.requestFullscreen&&!document.fullscreenElement)G.requestFullscreen().catch(()=>{});}
+function ke(n){if(!isi.length)return;i=Math.max(0,Math.min(isi.length-1,n));const it=isi[i];
+ lay.querySelectorAll('img,iframe').forEach(x=>x.remove());lay.insertBefore(tampil(it.href),ki);
+ jdl.textContent=it.judul;hit.textContent=(i+1)+' / '+isi.length;tab.href=it.href;ki.disabled=i===0;ka.disabled=i===isi.length-1;
+ daf.querySelectorAll('button').forEach((b,k)=>{const on=k===i;b.classList.toggle('aktif',on);if(on)b.scrollIntoView({block:'nearest'});});}
+function buka(a){isi=kumpul();let k=isi.findIndex(x=>x.href===a.href);if(k<0)return false;
+ if(isi[k].seri){const k1=isi.findIndex(x=>x.sec===isi[k].sec&&x.seri===isi[k].seri);if(k1>=0)k=k1;}
+ daf.replaceChildren();let tp='';
+ isi.forEach((it,n)=>{if(it.topik!==tp){tp=it.topik;const h=document.createElement('li');h.className='kel';h.textContent=tp;daf.appendChild(h);}
+  const li=document.createElement('li');const b=document.createElement('button');b.type='button';b.textContent=(it.seri?'▤ ':'')+it.judul;b.onclick=()=>ke(n);li.appendChild(b);daf.appendChild(li);});
+ G.hidden=false;document.body.classList.add('galeri-buka');ke(k);
+ if(G.requestFullscreen&&!document.fullscreenElement)G.requestFullscreen().catch(()=>{});return true;}
 function tutup(){lay.querySelectorAll('img,iframe').forEach(x=>x.remove());G.hidden=true;document.body.classList.remove('galeri-buka');
  if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
 G.querySelector('.tutup').onclick=tutup;ki.onclick=()=>ke(i-1);ka.onclick=()=>ke(i+1);tab.addEventListener('click',()=>setTimeout(tutup,0));
-document.addEventListener('keydown',e=>{if(G.hidden)return;if(e.key==='ArrowRight'){ke(i+1);e.preventDefault();}else if(e.key==='ArrowLeft'){ke(i-1);e.preventDefault();}else if(e.key==='Escape'&&!document.fullscreenElement)tutup();});
+document.addEventListener('keydown',e=>{if(G.hidden)return;if(e.key==='ArrowRight'||e.key==='ArrowDown'){ke(i+1);e.preventDefault();}else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ke(i-1);e.preventDefault();}else if(e.key==='Escape'&&!document.fullscreenElement)tutup();});
 let x0=null;lay.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
 lay.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)ke(i+(dx<0?1:-1));},{passive:true});
-document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-seri]');if(!a||e.metaKey||e.ctrlKey)return;
- e.preventDefault();e.stopImmediatePropagation();buka(a.dataset.seri);},true);})();
+/*tandai infografis berseri di daftar*/
+kumpul().forEach(it=>{if(it.seri)it.a.classList.add('seri-info');});
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('.topik a');if(!a||e.metaKey||e.ctrlKey||!isFile(a))return;
+ const li=a.closest('li');if(!li||li.closest('.video-pendek,.video-daftar')||!/infografis/i.test(li.textContent||''))return;
+ if(buka(a)){e.preventDefault();e.stopImmediatePropagation();}},true);})();
 /*ke-atas: muncul begitu kotak pencarian tergulir keluar layar (sama di Mac, iPad, HP); hilang di paling atas; cek cadangan tiap 600 ms untuk Safari iOS; tetap tampil sampai halaman kembali di paling atas; klik -> kembali ke atas (kotak pencarian dan chip) untuk menutup bab atau mengganti pencarian*/
 (()=>{const b=document.createElement('button');b.id='ke-atas';b.type='button';b.setAttribute('aria-label','Kembali ke atas');b.title='Kembali ke atas';b.textContent='↑';
 document.body.appendChild(b);

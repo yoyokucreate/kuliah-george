@@ -112,6 +112,11 @@ body.panel-buka #ke-atas{display:none}
 #pemutar .daftar button:hover{border-color:#c0392b}
 @media (max-width:52rem){#pemutar .isi{flex-direction:column}#pemutar .daftar{width:auto;max-height:34vh}}
 body.pemutar-buka #ke-atas{display:none}
+/*perisai-drive: menutup ikon 'buka di jendela baru' milik pemutar Google Drive (pojok kanan atas), supaya file dibuka lewat tombol katalog*/
+#pemutar .layar,#galeri .layar{position:relative}
+#pemutar .layar::after,#galeri .layar::after{content:"";position:absolute;top:0;right:0;width:68px;height:62px;z-index:3;background:transparent}
+#galeri .layar::after{right:0}
+#pemutar .jeda{text-align:center;color:#ddd;font:1rem system-ui,sans-serif}#pemutar .jeda button{margin-top:.6rem;font:600 1rem system-ui,sans-serif;color:#fff;background:#a5281b;border:0;border-radius:8px;padding:.55rem 1rem;cursor:pointer}
 /*galeri-seri: penampil infografis berseri (selalu mulai dari bagian 1)*/
 #galeri{position:fixed;inset:0;z-index:2147483200;background:#0b0f10;color:#eee;display:flex;flex-direction:column}
 #galeri[hidden]{display:none}
@@ -3942,7 +3947,10 @@ function tutup(){layar.querySelectorAll('video').forEach(v=>{try{v.pause();}catc
  document.body.classList.remove('pemutar-buka');if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
 P.querySelector('.tutup').onclick=tutup;
 /*buka di tab baru -> pemutar di katalog dihentikan dan ditutup, agar video yang sama tidak berjalan dua kali*/
-tab.addEventListener('click',()=>setTimeout(tutup,0));
+tab.addEventListener('click',()=>setTimeout(()=>{const k=[...daftar.querySelectorAll('button')].findIndex(x=>x.classList.contains('aktif'));
+ layar.querySelectorAll('video').forEach(v=>{try{v.pause();}catch(_){}});layar.replaceChildren();
+ const m=document.createElement('div');m.className='jeda';m.innerHTML='<p>Video sedang diputar di tab baru.</p>';
+ const pb=document.createElement('button');pb.type='button';pb.textContent='▶ Putar lagi di sini';pb.onclick=()=>putar(Math.max(0,k));m.appendChild(pb);layar.appendChild(m);},0));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!P.hidden&&!document.fullscreenElement)tutup();});
 document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a.p-video');if(!a||e.metaKey||e.ctrlKey)return;
  e.preventDefault();e.stopImmediatePropagation();buka(a);},true);})();
@@ -3989,7 +3997,7 @@ function buka(a){isi=kumpul();let k=isi.findIndex(x=>x.href===a.href);if(k<0)ret
  if(G.requestFullscreen&&!document.fullscreenElement)G.requestFullscreen().catch(()=>{});return true;}
 function tutup(){lay.querySelectorAll('img,iframe').forEach(x=>x.remove());G.hidden=true;document.body.classList.remove('galeri-buka');
  if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}
-G.querySelector('.tutup').onclick=tutup;ki.onclick=()=>ke(i-1);ka.onclick=()=>ke(i+1);tab.addEventListener('click',()=>setTimeout(tutup,0));
+G.querySelector('.tutup').onclick=tutup;ki.onclick=()=>ke(i-1);ka.onclick=()=>ke(i+1);/*Buka file: penampil dan daftar tetap terbuka, agar setelah tab baru ditutup langsung kembali ke sini*/
 document.addEventListener('keydown',e=>{if(G.hidden)return;if(e.key==='ArrowRight'||e.key==='ArrowDown'){ke(i+1);e.preventDefault();}else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ke(i-1);e.preventDefault();}else if(e.key==='Escape'&&!document.fullscreenElement)tutup();});
 let x0=null;lay.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
 lay.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)ke(i+(dx<0?1:-1));},{passive:true});
